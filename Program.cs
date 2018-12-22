@@ -88,8 +88,23 @@ namespace ConsoleApp1
             return rand.Next(0, 3);
         }
 
-        //Fonction d'affichage de la grille
+        //Fonction d'affichage de la grille en strings
         static void Grid(string[,] tab)
+        {
+            for (int i = 0; i < tab.GetLength(0); i++)
+            {
+                for (int j = 0; j < tab.GetLength(1); j++)
+                {
+                    Console.Write("|");
+                    Console.Write(tab[i, j]);
+                }
+                Console.WriteLine("|");
+            }
+            Console.WriteLine("");
+        }
+
+        //Fonction d'affichage de la grille en float
+        static void Grid(float[,] tab)
         {
             for (int i = 0; i < tab.GetLength(0); i++)
             {
@@ -220,6 +235,32 @@ namespace ConsoleApp1
                 }
             }
             return true;
+        }
+        //IA
+        static int[] MorpionIA(string[,] tab)
+        {
+            int[] coordRetour = new int[2];
+            float[,] probTable = new float[tab.GetLength(0), tab.GetLength(1)];
+
+            int I=0, J=0;
+
+            for (int i = 0; i < tab.GetLength(0); i++)
+            {
+                for (int j = 0; j < tab.GetLength(1); j++)
+                {
+                    if (tab[i, j] != " ")
+                    {
+                        probTable[i, j] = 0;
+                    }
+                    else
+                    {
+
+                }
+            }
+            Grid(probTable);
+            coordRetour[0] = I;
+            coordRetour[1] = J;
+            return coordRetour;
         }
     }
 }
