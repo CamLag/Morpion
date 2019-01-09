@@ -7,17 +7,14 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            string[,] morp = { { "X", " ", " " }, { " ", "X", " " }, { "O", " ", " " } };
+            string[,] morp = { { " ", " ", " "}, { " ", " ", " " }, { " ", " ", " " } };
             int I = 0, J = 0;
-            string campGagnant="match nul!";
+            string campGagnant= "Match nul!";
             Boolean traitJoueur = true;
 
             Grid(morp);
 
-            MorpionIA(morp);
-
-
-            /*while (!(VerifyVictory(morp,ref campGagnant)) && !(VerifyFull(morp)))
+            while (!(VerifyVictory(morp,ref campGagnant)) && !(VerifyFull(morp)))
             {
                 if (traitJoueur == true)
                 {
@@ -42,25 +39,13 @@ namespace ConsoleApp1
                 }
                 else
                 {
-                    do
-                    {
-                        I = CompCoord();
-                        J = CompCoord();
-                        if (VerifyCoord(I, J, morp))
-                        {
-                            Console.WriteLine("je rééssaye");
-                        }
-                        else
-                        {
-                            morp[I, J] = "O";
-                            break;
-                        }
-                    } while (VerifyCoord(I, J, morp));
+                    MorpionIA(morp);
+
                     traitJoueur = true;
                     Grid(morp);
                 }
             }
-            Console.WriteLine(campGagnant);*/
+            Console.WriteLine(campGagnant);
         }
 
         //Fonction qui demande une coord au joueur
@@ -139,7 +124,7 @@ namespace ConsoleApp1
             int comptX = 0;
             int comptO = 0;
             Boolean retour = false;
-
+            campGagnant = "Match nul!";
             // Lignes
             for (int i = 0; i < tab.GetLength(0); i++)
             {
@@ -239,7 +224,7 @@ namespace ConsoleApp1
             return true;
         }
 
-        //Affichage de fullList
+        //Affichage de fullList (pour l'IA)
         static void ListAffiche(List<List<int[]>> doubleListe)
         {
             Console.WriteLine("Voici fullList:");
@@ -257,10 +242,10 @@ namespace ConsoleApp1
         }
 
         //IA
-        static int[] MorpionIA(string[,] tab)
+        static void MorpionIA(string[,] tab)
         {
-            int[] coordRetour = new int[2];
-            float[,] probTable = new float[tab.GetLength(0), tab.GetLength(1)];
+            float[,] probTableWin = new float[tab.GetLength(0), tab.GetLength(1)];
+            float[,] probTableDraw = new float[tab.GetLength(0), tab.GetLength(1)];
             String[,] testTable = new string[tab.GetLength(0), tab.GetLength(1)];
             List<int[]> possibleCoord = new List<int[]>();
 
@@ -282,16 +267,15 @@ namespace ConsoleApp1
                 }
             }
 
-            foreach (int[] A in possibleCoord)
+            /*foreach (int[] A in possibleCoord)
             {
                 Console.WriteLine("[{0}, {1}]", A[0], A[1]);
-            }
+            }*/
 
             //on créé l'ensemble des combinaisons d'ordres possibles des éléments de cette liste 
             List<List<int[]>> fullList = new List<List<int[]>>();
 
             fullList.Add(possibleCoord.GetRange(0,1));
-            ListAffiche(fullList);
 
             int compt = fullList.Count;
             for (int i = 1; i < possibleCoord.Count; i++)
@@ -301,22 +285,17 @@ namespace ConsoleApp1
                 {
                     for (int j = 0; j < compt; j++)
                     {
-                        Console.WriteLine("i vaut {0}, j vaut {1}, compt vaut {2}", i, j, compt);
                         fullList.Add(fullList[j].GetRange(0, fullList[j].Count));
                     }
                     l++;
                 }
-                ListAffiche(fullList);
                 
                 int pos = 0;
                 int compteur = 0;
-                Console.WriteLine("compt vaut {0}", compt);
 
                 for (int k = 0; k < fullList.Count; k++)
                 {
-                    Console.WriteLine("i vaut {0}, k vaut {1}, pos vaut {2}, compteur vaut {3}",i, k, pos, compteur);
                     fullList[k].Insert(pos, possibleCoord[i]); 
-                    ListAffiche(fullList);
                     compteur++;
                     if (compteur == compt)
                     {
@@ -325,31 +304,88 @@ namespace ConsoleApp1
                     }
                 }
                 compt = fullList.Count;
-                ListAffiche(fullList);
-                Console.WriteLine("compt vaut {0}", compt);
             }
 
-
-
-            while (!(VerifyVictory(testTable, ref campGagnant)) && !(VerifyFull(testTable)))
+            //On simule des parties selon toutes les combinaisons
+            for (int i = 0; i < fullList.Count; i++)
             {
-                for (int i = 0; i < tab.GetLength(0); i++)
+                Array.Copy(tab, testTable, tab.GetLength(0) * tab.GetLength(1));
+
+                trait = "O";
+                for (int j = 0; j < fullList[0].Count; j++)
                 {
-                    for (int j = 0; j < tab.GetLength(1); j++)
+
+                    testTable[fullList[i][j][0], fullList[i][j][1]] = trait;
+                    trait = trait == "X" ? "O" : "X";
+                    if (VerifyVictory(testTable, ref campGagnant))
                     {
-                        if (!VerifyCoord(i,j,testTable))
+                        if (campGagnant == "J'ai gagné!")
                         {
-                            testTable[i, j] = trait;
-                            trait = trait == "X" ? "O" : "X";
+                            probTableWin[fullList[i][0][0], fullList[i][0][1]]++;
+
                         }
+                        if (campGagnant == "Match nul!")
+                        {
+                            probTableDraw[fullList[i][0][0], fullList[i][0][1]]++;
+
+                        }
+                        break;
                     }
                 }
             }
-            Grid(testTable);
-            Grid(probTable);
-            coordRetour[0] = I;
-            coordRetour[1] = J;
-            return coordRetour;
+
+            float maxProbWin = 0;
+
+            for (int i = 0; i < probTableWin.GetLength(0); i++)
+            {
+                for (int j = 0; j < probTableWin.GetLength(0); j++)
+                {
+                    if (probTableWin[i, j] > maxProbWin)
+                    {
+                        maxProbWin = probTableWin[i, j];
+                    }
+                }
+            }
+
+            for (int i = 0; i < probTableWin.GetLength(0); i++)
+            {
+                for (int j = 0; j < probTableWin.GetLength(0); j++)
+                {
+                    if ((probTableWin[i, j] == maxProbWin)&&(!VerifyCoord(i, j, tab)))
+                    {
+                        I = i;
+                        J = j;
+                    }
+                }
+            }
+
+            float maxProbDraw = 0;
+
+            for (int i = 0; i < probTableDraw.GetLength(0); i++)
+            {
+                for (int j = 0; j < probTableDraw.GetLength(0); j++)
+                {
+                    if (probTableDraw[i, j] > maxProbDraw)
+                    {
+                        maxProbDraw = probTableDraw[i, j];
+                    }
+                }
+            }
+
+            for (int i = 0; i < probTableDraw.GetLength(0); i++)
+            {
+                for (int j = 0; j < probTableDraw.GetLength(0); j++)
+                {
+                    if ((probTableDraw[i, j] == maxProbDraw) && (!VerifyCoord(i, j, tab)))
+                    {
+                        I = i;
+                        J = j;
+                    }
+                }
+            }
+            Grid(probTableWin);
+            Grid(probTableDraw);
+            tab[I, J] = "O";
         }
 
     }
